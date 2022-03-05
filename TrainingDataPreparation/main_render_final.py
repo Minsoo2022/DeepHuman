@@ -215,6 +215,7 @@ def save_render_params(param, output_dir, img_idx):
 
 def main():
     output_dir = conf.output_dir
+    os.makedirs(output_dir, exist_ok=True)
     bg_dir = conf.bg_dir
     hb_ratio = conf.hb_ratio
     dataset_dir = conf.dataset_dir
@@ -241,7 +242,42 @@ def main():
             continue
 
         # preprocess 3D models
+        with open(os.path.join(dataset_dir, data_item, 'smpl_params.txt'), 'r') as fp:
+            lines = fp.readlines()
+            lines = [l[:-2] for l in lines]  # remove '\r\n'
+
+            betas_data = filter(lambda s: len(s) != 0, lines[1].split(' '))
+            betas = np.array([float(b) for b in betas_data])
+
+            root_mat_data = lines[3].split(' ') + lines[4].split(' ') + \
+                            lines[5].split(' ') + lines[6].split(' ')
+
+            root_mat_data = filter(lambda s: len(s) != 0, root_mat_data)
+
+            qwe = []
+            for m in root_mat_data:
+                qwe.append(float(m))
+            qwe.append(float(1))
+
+            root_mat = np.reshape(np.array(qwe), (4, 4))
+            root_rot = root_mat[:3, :3]
+            root_trans = root_mat[:3, 3]
+        import pdb; pdb.set_trace()
+
+
         mesh, smpl = load_models(dataset_dir, data_item, conf.axis_transformation)
+
+
+        # mesh['v'] = np.matmul(mesh['v'], root_rot) * np.array([1,-1,-1])
+        # smpl['v'] = np.matmul(smpl['v'], root_rot) * np.array([1,-1,-1])
+
+        mesh['v'] = np.matmul(mesh['v'] - np.reshape(root_trans, (1, -1)), np.linalg.inv(root_rot)) * np.array([1,-1,-1]) + np.reshape(root_trans, (1, -1))
+        smpl['v'] = np.matmul(smpl['v'] - np.reshape(root_trans, (1, -1)), np.linalg.inv(root_rot)) * np.array([1,-1,-1]) + np.reshape(root_trans, (1, -1))
+
+        trans, scale = util.calc_transform_params(mesh, smpl, 1, 0)
+        util.transform_mesh_in_place(mesh, trans, scale)
+        util.transform_mesh_in_place(smpl, trans, scale)
+
         # mesh, smpl, param_0 = transform_model_randomly(mesh, smpl, hb_ratio)
         # save_model_for_voxelization(mesh, smpl, min_corner, max_corner, output_dir, di)
 
@@ -249,9 +285,7 @@ def main():
         # Note that to reduce storage consumption, I use a trick; that is, I render
         # data from 4 orthogonal viewpoints (front/back/left/right), so that the
         # voxelization data in the front viewpoint can be reused in other viewpoints
-        trans, scale = util.calc_transform_params(mesh, smpl, 1, 0)
-        util.transform_mesh_in_place(mesh, trans, scale)
-        util.transform_mesh_in_place(smpl, trans, scale)
+
         view_dict = {0:0, 90:270, 180:90, 270:180}
         for view_id in [0, 90, 180, 270]:
             mesh, smpl = rotation_model(mesh, smpl, view_id)
