@@ -116,12 +116,14 @@ def render_training_pairs(mesh, smpl, img_w, img_h, camera_r, camera_t, color_bg
     # See: https://stackoverflow.com/questions/22069167/opencv-how-to-smoothen-boundary
     u = _project_vertices(v_, img_w*2, img_h*2, camera_r, camera_t)
     color_bg = cv.resize(color_bg, (img_w*2, img_h*2))
-    img = _render_color_model_with_lighting(img_w*2, img_h*2, v_, mesh['vn'],
-                                            mesh['vc'], mesh['f'], u,
-                                            sh_comps=sh_comps, light_c=light_c,
-                                            vlight_pos=vlight_pos,
-                                            vlight_color=vlight_color,
-                                            bg_img=color_bg)
+    # img = _render_color_model_with_lighting(img_w*2, img_h*2, v_, mesh['vn'],
+    #                                         mesh['vc'], mesh['f'], u,
+    #                                         sh_comps=sh_comps, light_c=light_c,
+    #                                         vlight_pos=vlight_pos,
+    #                                         vlight_color=vlight_color,
+    #                                         bg_img=color_bg)
+    img = _render_color_model_without_lighting(img_w*2, img_h*2, v_,
+                                            mesh['vc'], mesh['f'], u, bg_img=color_bg)
     img = cv.resize(img, (img_w, img_h))
     img = np.float32(np.copy(img))
 

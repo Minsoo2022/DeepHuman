@@ -152,10 +152,11 @@ def sample_bg_img(bg_list, bg_root, w=256, h=256):
     n = len(bg_list)
     i = np.random.randint(0, n, 1, dtype=np.int32)
     img_dir = os.path.join(bg_root, bg_list[i[0]])
-    img = cv.imread(img_dir)
+    # img = cv.imread(img_dir)
+    img = None
     if img is None:
-        return np.ones((h, w, 3), np.float32), 'none'
-
+        # return np.ones((h, w, 3), np.float32), 'none'
+        return np.zeros((h, w, 3), np.float32), 'none'
     # convert color
     if len(img.shape) == 2 or (len(img.shape) == 3 and img.shape[2] == 1):
         img = cv.cvtColor(img, cv.COLOR_GRAY2RGB)
