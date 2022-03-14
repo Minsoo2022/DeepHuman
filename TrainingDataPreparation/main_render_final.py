@@ -271,10 +271,12 @@ def main():
         # mesh['v'] = np.matmul(mesh['v'], root_rot) * np.array([1,-1,-1])
         # smpl['v'] = np.matmul(smpl['v'], root_rot) * np.array([1,-1,-1])
 
-        mesh['v'] = np.matmul(mesh['v'] - np.reshape(root_trans, (1, -1)), np.linalg.inv(root_rot)) * np.array([1,-1,-1]) + np.reshape(root_trans, (1, -1))
-        smpl['v'] = np.matmul(smpl['v'] - np.reshape(root_trans, (1, -1)), np.linalg.inv(root_rot)) * np.array([1,-1,-1]) + np.reshape(root_trans, (1, -1))
 
+        # mesh['v'] = np.matmul(mesh['v'] - np.reshape(root_trans, (1, -1)), root_rot) * np.array([1,-1,-1]) + np.reshape(root_trans, (1, -1))
+        # smpl['v'] = np.matmul(smpl['v'] - np.reshape(root_trans, (1, -1)), root_rot) * np.array([1,-1,-1]) + np.reshape(root_trans, (1, -1))
 
+        trans, scale = util.calc_transform_params(mesh, smpl, 1, 0)
+        trans = -root_trans
         # mesh, smpl, param_0 = transform_model_randomly(mesh, smpl, hb_ratio)
         # save_model_for_voxelization(mesh, smpl, min_corner, max_corner, output_dir, di)
 
@@ -282,7 +284,7 @@ def main():
         # Note that to reduce storage consumption, I use a trick; that is, I render
         # data from 4 orthogonal viewpoints (front/back/left/right), so that the
         # voxelization data in the front viewpoint can be reused in other viewpoints
-        trans, scale = util.calc_transform_params(mesh, smpl, 1, 0)
+
         util.transform_mesh_in_place(mesh, trans, scale)
         util.transform_mesh_in_place(smpl, trans, scale)
         view_dict = {0:0, 90:270, 180:90, 270:180}
