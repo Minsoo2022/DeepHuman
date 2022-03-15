@@ -192,7 +192,7 @@ def sample_verticle_lighting(light_num=3):
     return light_pos, light_color
 
 
-def calc_transform_params(mesh, smpl, hb_ratio=1.0, scale_noise=0):
+def calc_transform_params(mesh, hb_ratio=1.0, scale_noise=0):
     """
     Calculates the transformation params used to transform the mesh to unit
     bounding box centered at the origin. Returns translation and scale.
@@ -205,13 +205,6 @@ def calc_transform_params(mesh, smpl, hb_ratio=1.0, scale_noise=0):
     max_y = np.max(mesh['v'][:, 1])
     min_z = np.min(mesh['v'][:, 2])
     max_z = np.max(mesh['v'][:, 2])
-
-    min_x = min(np.min(smpl['v'][:, 0]), min_x)
-    max_x = max(np.max(smpl['v'][:, 0]), max_x)
-    min_y = min(np.min(smpl['v'][:, 1]), min_y)
-    max_y = max(np.max(smpl['v'][:, 1]), max_y)
-    min_z = min(np.min(smpl['v'][:, 2]), min_z)
-    max_z = max(np.max(smpl['v'][:, 2]), max_z)
 
     trans = -np.array([(min_x + max_x) / 2, (min_y + max_y) / 2,
                        (min_z + max_z) / 2])

@@ -98,14 +98,10 @@ def check_rendered_img_existence(output_dir, model_idx):
 def load_models(dataset_dir, data_item, axis_transformation):
     """loads the model and corrects the orientation"""
     mesh_dir = os.path.join(dataset_dir, data_item, 'mesh.obj')
-    smpl_dir = os.path.join(dataset_dir, data_item, 'smpl.obj')
     mesh = load_obj_data(mesh_dir)
-    smpl = load_obj_data(smpl_dir)
     util.flip_axis_in_place(mesh, axis_transformation[0],
                             axis_transformation[1], axis_transformation[2])
-    util.flip_axis_in_place(smpl, axis_transformation[0],
-                            axis_transformation[1], axis_transformation[2])
-    return mesh, smpl
+    return mesh
 
 
 def save_model_for_voxelization(mesh, smpl, min_corner, max_corner,
@@ -157,14 +153,13 @@ def transform_model_randomly(mesh, smpl, hb_ratio):
     param['mesh_bbox'] = np.concatenate([bbox_p1, bbox_p2])
     return mesh, smpl, param
 
-def rotation_model(mesh, smpl, view_id):
+def rotation_model(mesh, view_id):
     """translates the model to the origin, and rotates it randomly"""
     # random rotation
     y_rot = np.pi * 2 * view_id / 360
     x_rot = 0
     z_rot = 0
     mesh = util.rotate_model_in_place(mesh, x_rot, y_rot, z_rot)
-    smpl = util.rotate_model_in_place(smpl, x_rot, y_rot, z_rot)
 
     # transform the mesh and SMPL to unit bounding box
     # [-0.333, 0.333]x[-0.5, 0.5]x[-0.333, 0.333]
@@ -177,21 +172,18 @@ def rotation_model(mesh, smpl, view_id):
 
     # create a dict of transformation parameters
 
-    return mesh, smpl
+    return mesh
 
-def save_rendered_data(img, msk, nml, smap, output_dir, view_id):
+def save_rendered_data(img, msk, nml, output_dir, view_id):
     """saves rendered images with correct format"""
     img = np.uint8(img * 255)
     msk = np.uint8(msk[:, :, 0] * 255)
     nml = np.uint16(nml * 65535)
-    vmap = np.uint8(smap * 255)
 
     cv.imwrite('%s/color/%s.jpg' % (output_dir, str(view_id).zfill(4)),
                cv.cvtColor(img, cv.COLOR_RGB2BGR))
     cv.imwrite('%s/mask/%s.png' % (output_dir, str(view_id).zfill(4)), msk)
     cv.imwrite('%s/normal/%s.png' % (output_dir, str(view_id).zfill(4)), nml)
-    cv.imwrite('%s/vmap/%s.png' % (output_dir, str(view_id).zfill(4)),
-               cv.cvtColor(vmap, cv.COLOR_BGR2RGB))
 
 
 def save_render_params(param, output_dir, img_idx):
@@ -234,38 +226,19 @@ def main():
 
     pb = util.ProgressBar(80)
     pb.start(len(data_list)*4)
-
+    data_list = ['1']
     for di, data_item in enumerate(data_list):
+
         make_output_dir(os.path.join(output_dir, data_item))
         if check_rendered_img_existence(output_dir, di):
             pb.count(c=4)
             continue
 
-        # preprocess 3D models
-        with open(os.path.join(dataset_dir, data_item, 'smpl_params.txt'), 'r') as fp:
-            lines = fp.readlines()
-            lines = [l[:-2] for l in lines]  # remove '\r\n'
+        mesh = load_obj_data('/home/nas3_userJ/shimgyumin/fasker/research/pamir/networks/results/validation_256gtsmpl__pamir_nerf_0222_48_03_rayontarget_rayonpts_occ_attloss_inout_24hie_2022_02_25_01_56_52/525_270_sigma_mesh_tex.obj')
+        util.flip_axis_in_place(mesh, conf.axis_transformation[0],
+                                conf.axis_transformation[1], conf.axis_transformation[2])
 
-            betas_data = filter(lambda s: len(s) != 0, lines[1].split(' '))
-            betas = np.array([float(b) for b in betas_data])
-
-            root_mat_data = lines[3].split(' ') + lines[4].split(' ') + \
-                            lines[5].split(' ') + lines[6].split(' ')
-
-            root_mat_data = filter(lambda s: len(s) != 0, root_mat_data)
-
-            qwe = []
-            for m in root_mat_data:
-                qwe.append(float(m))
-            qwe.append(float(1))
-
-            root_mat = np.reshape(np.array(qwe), (4, 4))
-            root_rot = root_mat[:3, :3]
-            root_trans = root_mat[:3, 3]
-        import pdb; pdb.set_trace()
-
-
-        mesh, smpl = load_models(dataset_dir, data_item, conf.axis_transformation)
+        # mesh, smpl = load_models(dataset_dir, data_item, conf.axis_transformation)
 
 
         # mesh['v'] = np.matmul(mesh['v'], root_rot) * np.array([1,-1,-1])
@@ -275,8 +248,8 @@ def main():
         # mesh['v'] = np.matmul(mesh['v'] - np.reshape(root_trans, (1, -1)), root_rot) * np.array([1,-1,-1]) + np.reshape(root_trans, (1, -1))
         # smpl['v'] = np.matmul(smpl['v'] - np.reshape(root_trans, (1, -1)), root_rot) * np.array([1,-1,-1]) + np.reshape(root_trans, (1, -1))
 
-        trans, scale = util.calc_transform_params(mesh, smpl, 1, 0)
-        trans = -root_trans
+        trans, scale = util.calc_transform_params(mesh, 1, 0)
+
         # mesh, smpl, param_0 = transform_model_randomly(mesh, smpl, hb_ratio)
         # save_model_for_voxelization(mesh, smpl, min_corner, max_corner, output_dir, di)
 
@@ -286,10 +259,10 @@ def main():
         # voxelization data in the front viewpoint can be reused in other viewpoints
 
         util.transform_mesh_in_place(mesh, trans, scale)
-        util.transform_mesh_in_place(smpl, trans, scale)
+
         view_dict = {0:0, 90:270, 180:90, 270:180}
         for view_id in [0, 90, 180, 270]:
-            mesh, smpl = rotation_model(mesh, smpl, view_id)
+            mesh = rotation_model(mesh, view_id)
 
             bg, bg_fname = util.sample_bg_img(bg_list, bg_dir,
                                               render_img_w, render_img_h)
@@ -297,21 +270,15 @@ def main():
             vl_pos, vl_clr = util.sample_verticle_lighting(3)
             cam_t, cam_r = ch.array((0, 0, 10.0)), ch.array((3.14, 0, 0))
 
-            img, msk, nml, smap = rd.render_training_pairs(mesh, smpl,
+            img, msk, nml = rd.render_training_pairs(mesh,
                                                            render_img_w, render_img_h,
                                                            cam_r, cam_t, bg,
                                                            sh_comps=sh,
                                                            light_c=ch.ones(3),
                                                            vlight_pos=vl_pos,
                                                            vlight_color=vl_clr)
-            save_rendered_data(img, msk, nml, smap, os.path.join(output_dir, data_item), view_dict[view_id])
-            if view_id == 0:
-                save_obj_data(mesh, os.path.join(output_dir, data_item, 'mesh_after.obj'))
-                save_obj_data(smpl, os.path.join(output_dir, data_item, 'smpl_after.obj'))
-                with open(os.path.join(output_dir, data_item, '%s.txt'%(str(view_dict[view_id]))), 'w') as f:
-                    f.writelines('%s,%s,%s'%(str(trans[0]), str(trans[1]), str(trans[2])))
-                    f.writelines('\n')
-                    f.writelines('%s'%(str(scale)))
+            save_rendered_data(img, msk, nml, os.path.join(output_dir, data_item), view_dict[view_id])
+
 
             # save parameters to a json file
             # param_1 = dict()

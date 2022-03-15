@@ -33,12 +33,13 @@ import math
 
 # directories
 dataset_dir = '/home/nas1_temp/dataset/Deephuman_norot/mesh_data'
-output_dir = '/home/nas1_temp/dataset/Deephuman_norot_no/image_data'
+# output_dir = '/home/nas1_temp/dataset/Deephuman_norot_no/image_data'
+output_dir = './test'
 bg_dir = './bg_img'       # background image directory
 
 # axes along which flipping is applied
 # axis_transformation = np.array([1, 1, 1])
-axis_transformation = np.array([1, -1, -1]) # which axis(axes) to flip
+axis_transformation = np.array([1, 1, 1]) # which axis(axes) to flip
 
 # output image resolution
 render_img_w = 512

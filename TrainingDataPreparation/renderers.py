@@ -103,13 +103,13 @@ def _render_mask(w, h, v, f, u):
     return rn.r
 
 
-def render_training_pairs(mesh, smpl, img_w, img_h, camera_r, camera_t, color_bg,
+def render_training_pairs(mesh, img_w, img_h, camera_r, camera_t, color_bg,
                           sh_comps=None, light_c=ch.ones(3),
                           vlight_pos=None, vlight_color=None):
     """generates training image pairs
     Will generate color image, mask, semantic map, normal map
     """
-    v_, v_smpl_ = mesh['v'], smpl['v']
+    v_ = mesh['v']
 
     # render color image
     # To avoid aliasing, I render the image with 2x resolution and then resize it
@@ -142,11 +142,4 @@ def render_training_pairs(mesh, smpl, img_w, img_h, camera_r, camera_t, color_bg
                                                u, bg_img=None)
     nml = np.float32(np.copy(nml))
 
-    # render semantic map
-    u = _project_vertices(v_smpl_, img_w, img_h, camera_r, camera_t)
-    vc_smpl = util.get_smpl_semantic_code()
-    smap = _render_color_model_without_lighting(img_w, img_h, v_smpl_, vc_smpl,
-                                                smpl['f'], u, bg_img=None)
-    smap = np.float32(np.copy(smap))
-
-    return img, msk, nml, smap
+    return img, msk, nml
