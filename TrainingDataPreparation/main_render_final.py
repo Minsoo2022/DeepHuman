@@ -215,7 +215,6 @@ def main():
     render_img_h = conf.render_img_h
 
     np.random.seed()
-    make_output_dir(output_dir)
 
     data_list = load_data_list(dataset_dir)
     bg_list = load_bg_list(bg_dir)
@@ -226,7 +225,7 @@ def main():
 
     pb = util.ProgressBar(80)
     pb.start(len(data_list)*4)
-    data_list = ['1']
+    data_list = os.listdir(conf.dataset_dir)
     for di, data_item in enumerate(data_list):
 
         make_output_dir(os.path.join(output_dir, data_item))
@@ -234,7 +233,7 @@ def main():
             pb.count(c=4)
             continue
 
-        mesh = load_obj_data('/home/nas3_userJ/shimgyumin/fasker/research/pamir/networks/results/validation_256gtsmpl__pamir_nerf_0222_48_03_rayontarget_rayonpts_occ_attloss_inout_24hie_2022_02_25_01_56_52/525_270_sigma_mesh_tex.obj')
+        mesh = load_obj_data(os.path.join(conf.dataset_dir, data_item, f'{data_item}.obj'))
         util.flip_axis_in_place(mesh, conf.axis_transformation[0],
                                 conf.axis_transformation[1], conf.axis_transformation[2])
 

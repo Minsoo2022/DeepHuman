@@ -32,9 +32,10 @@ import numpy as np
 import math
 
 # directories
-dataset_dir = '/home/nas1_temp/dataset/Deephuman_norot/mesh_data'
+# dataset_dir = '/home/nas1_temp/dataset/Deephuman_norot/mesh_data'
 # output_dir = '/home/nas1_temp/dataset/Deephuman_norot_no/image_data'
-output_dir = './test'
+dataset_dir = '/home/nas1_temp/dataset/Thuman/mesh_data_vc'
+output_dir = './Thuman_data_vc'
 bg_dir = './bg_img'       # background image directory
 
 # axes along which flipping is applied
